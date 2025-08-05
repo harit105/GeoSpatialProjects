@@ -1,6 +1,7 @@
 # Interactive Home Value Index Visualization
 
 This project creates an interactive time-series map visualization of median home values by county in California using the Zillow Home Value Index data.
+<img width="881" height="607" alt="Screenshot 2025-08-05 at 12 47 02 PM" src="https://github.com/user-attachments/assets/31a2f16c-420f-410a-9082-99c74fe34304" />
 
 ## Overview
 
