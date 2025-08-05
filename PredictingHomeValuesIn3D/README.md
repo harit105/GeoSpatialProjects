@@ -5,6 +5,7 @@ A comprehensive geospatial analysis project that visualizes and predicts residen
 ## 📋 Overview
 
 This project combines Zillow's Home Value Index (ZHVI) data with county-level geospatial boundaries to create interactive 3D visualizations of median home values across the United States. The notebook demonstrates advanced spatial data integration and 3D choropleth mapping techniques.
+
 <img width="528" height="575" alt="Screenshot 2025-08-05 at 1 36 28 PM" src="https://github.com/user-attachments/assets/9e7b50a2-baab-4edb-ba4d-10bd9af8caf2" />
 
 ## 🎯 Objectives
