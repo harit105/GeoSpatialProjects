@@ -5,6 +5,7 @@ A comprehensive tutorial for creating interactive legends for crop and land cove
 ## 📋 Overview
 
 This project demonstrates how to create, customize, and export interactive legends for geospatial land cover data, with a focus on crop classification mapping. The notebook showcases various legend types using NLCD (National Land Cover Database) and ESA WorldCover datasets.
+<img width="753" height="596" alt="Screenshot 2025-08-05 at 1 10 26 PM" src="https://github.com/user-attachments/assets/6532e7a6-ecae-4697-b6a9-756e7957f104" />
 
 ## 🎯 Objectives
 
