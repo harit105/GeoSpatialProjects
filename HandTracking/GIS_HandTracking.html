@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hand Controlled Map with AI</title>
+    
+    <!-- Esri ArcGIS API CSS for map styling -->
+    <link
+          rel="stylesheet"
+          href="https://js.arcgis.com/4.31/esri/themes/light/main.css"
+          />
+    
+    <!-- HandTrack.js library for computer vision-based hand detection -->
+    <script src="https://cdn.jsdelivr.net/npm/handtrackjs@0.0.10/dist/handtrack.min.js"></script>
+    
+    <!-- Esri ArcGIS Maps SDK for JavaScript -->
+    <script src="https://js.arcgis.com/4.31/"></script>
+
+    <style>
+      /* Full viewport styling for immersive map experience */
+      html,
+      body,
+      #map {
+        height: 100vh; /* Full viewport height */
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Container for the webcam video feed */
+      #videoContainer {
+        position: absolute;
+        z-index: 10; /* Above map but below controls */
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%); /* Center horizontally */
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        display: none; /* Hidden by default, shown when tracking starts */
+      }
+
+      /* Toggle button for enabling/disabling hand tracking */
+      #controls {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%); /* Center horizontally */
+        z-index: 20; /* Highest z-index to stay on top */
+        background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+        padding: 10px 20px;
+        color: #fff;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s; /* Smooth hover effect */
+      }
+
+      /* Hover effect for better user interaction feedback */
+      #controls:hover {
+        background: rgba(0, 0, 0, 0.8);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Main map container where Esri map will be rendered -->
+    <div id="map"></div>
+    
+    <!-- Video container for webcam feed (initially hidden) -->
+    <div id="videoContainer">
+      <video id="video" width="320" height="240" autoplay></video>
+    </div>
+    
+    <!-- Control button to toggle hand tracking on/off -->
+    <div id="controls">Enable Hand Tracking</div>
+
+    <script>
+      // Load Esri modules using AMD (Asynchronous Module Definition)
+      require(["esri/Map", "esri/views/MapView", "esri/config"], (
+        Map,
+        MapView,
+        esriConfig
+      ) => {
+        // Set Esri API key for accessing premium basemaps and services
+        esriConfig.apiKey =
+          "YourAPI key";
+
+        // Create a new map instance with community basemap
+        const map = new Map({ basemap: "arcgis/community" });
+        
+        // Create a MapView to display the map in the DOM
+        const view = new MapView({
+          container: "map", // Reference to the map div element
+          map,
+          center: [-100.33, 43.69], // Initial center coordinates [longitude, latitude]
+          zoom: 3, // Initial zoom level
+        });
+
+        // Configuration parameters for HandTrack.js model
+        const modelParams = {
+          flipHorizontal: true, // Mirror the video horizontally for natural interaction
+          maxNumBoxes: 1, // Detect only one hand at a time
+          minConfidence: 0.5, // Minimum confidence threshold for hand detection (0-1)
+        };
+
+        // State variables for hand tracking functionality
+        let isTracking = false; // Flag to track if hand detection is active
+        let videoStream = null; // Store the webcam video stream
+        let lastHandSize = 0; // Previous hand bounding box area for zoom detection
+        let lastHandPosition = { x: 0, y: 0 }; // Previous hand center position for pan detection
+        let gestureInterval = null; // Store interval ID for gesture detection loop
+
+        // Load the HandTrack.js model and initialize the application
+        handTrack.load(modelParams).then((model) => {
+          // Get references to DOM elements
+          const video = document.getElementById("video");
+          const videoContainer = document.getElementById("videoContainer");
+          const controls = document.getElementById("controls");
+
+          // Add click event listener to the control button
+          controls.addEventListener("click", () => {
+            if (isTracking) {
+              stopHandTracking(); // Stop tracking if currently active
+            } else {
+              startHandTracking(video, model, videoContainer); // Start tracking if inactive
+            }
+          });
+
+          // Function to initialize and start hand tracking
+          function startHandTracking(videoElement, model, container) {
+            // Request access to user's webcam
+            navigator.mediaDevices
+              .getUserMedia({
+                video: true, // Request video stream only
+              })
+              .then((stream) => {
+                // Setup video stream and UI
+                videoStream = stream;
+                videoElement.srcObject = stream; // Connect stream to video element
+                videoElement.play(); // Start video playback
+                container.style.display = "block"; // Show video container
+                isTracking = true; // Update tracking state
+                controls.innerText = "Disable Hand Tracking"; // Update button text
+
+                // Start the hand detection loop with 50ms intervals for responsive tracking
+                setInterval(() => {
+                  // Use the model to detect hands in the current video frame
+                  model.detect(videoElement).then((predictions) => {
+                    if (predictions.length > 0) {
+                      // Extract hand bounding box data [x, y, width, height]
+                      const hand = predictions[0].bbox;
+                      const currentHandSize = hand[2] * hand[3]; // Calculate area (width * height)
+                      const zoomChange = currentHandSize - lastHandSize; // Compare with previous size
+
+                      // Zoom control: detect significant size changes in hand bounding box
+                      if (Math.abs(zoomChange) > 200) { // Sensitivity threshold
+                        if (zoomChange > 0 && view.zoom < 18) {
+                          // Hand appears larger = zoom in (max zoom level 18)
+                          view.zoom += 2;
+                        } else if (zoomChange < 0 && view.zoom > 3) {
+                          // Hand appears smaller = zoom out (min zoom level 3)
+                          view.zoom -= 2;
+                        }
+                        lastHandSize = currentHandSize; // Update reference size
+                      }
+
+                      // Call function to handle map panning based on hand movement
+                      detectGesture(predictions);
+                    }
+                  });
+                }, 50); // Detection loop runs every 50 milliseconds
+              });
+          }
+
+          // Function to stop hand tracking and clean up resources
+          function stopHandTracking() {
+            // Stop all video stream tracks to release camera access
+            videoStream.getTracks().forEach((track) => track.stop());
+            
+            // Hide video container and reset UI
+            videoContainer.style.display = "none";
+            isTracking = false;
+            controls.innerText = "Enable Hand Tracking";
+          }
+
+          // Function to detect hand gestures and control map panning
+          function detectGesture(predictions) {
+            // Exit early if no hands are detected
+            if (predictions.length === 0) return;
+            
+            // Get the first (and only) detected hand
+            const hand = predictions[0];
+            
+            // Calculate the center point of the hand bounding box
+            const currentX = hand.bbox[0] + hand.bbox[2] / 2; // x + width/2
+            const currentY = hand.bbox[1] + hand.bbox[3] / 2; // y + height/2
+            
+            // Calculate movement delta from last known position
+            const deltaX = currentX - lastHandPosition.x;
+            const deltaY = currentY - lastHandPosition.y;
+            
+            // Pan the map if hand movement exceeds threshold (reduces jitter)
+            if (Math.abs(deltaX) > 20 || Math.abs(deltaY) > 20) {
+              view.goTo({
+                center: [
+                  // Move map center opposite to hand movement for natural feel
+                  view.center.longitude - (deltaX * 0.01), // Horizontal movement
+                  view.center.latitude + (deltaY * 0.01)   // Vertical movement (inverted)
+                ]
+              }, { animate: false }); // Disable animation for smooth real-time panning
+            }
+            
+            // Update last known hand position for next frame comparison
+            lastHandPosition = { x: currentX, y: currentY };
+          }
+        }); // End of handTrack.load() promise
+      }); // End of Esri require() AMD loader
+    </script>
+  </body>
+</html>
