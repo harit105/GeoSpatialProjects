@@ -1,0 +1,59 @@
+# PDFM Embeddings - Keep private
+pdfm_embeddings/
+**/pdfm_embeddings/
+zcta_embeddings.csv
+county_embeddings.csv
+*.geojson
+
+# Large data files
+*.csv
+!Zillow/*.csv  # Allow Zillow data since it's already public
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model files and outputs
+*.pkl
+*.joblib
+*.model
