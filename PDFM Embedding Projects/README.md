@@ -1,6 +1,6 @@
 # Predicting Home Values in 3D with PDFM Features
 
-A comprehensive geospatial analysis project that visualizes and predicts residential home values using 3D mapping techniques and PDFM (Place Description Foundation Model) embeddings.
+A comprehensive geospatial analysis project that visualizes and predicts residential home values using 3D mapping techniques and PDFM (Population Dynamics Foundation Model) embeddings.
 
 ## 📋 Overview
 
