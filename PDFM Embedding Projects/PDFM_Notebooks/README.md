@@ -1,6 +1,6 @@
 # PDFM Demographic Prediction Study
 
-A comprehensive analysis of **Place Description Foundation Model (PDFM)** embeddings for geospatial demographic prediction, demonstrating superresolution and imputation techniques across multiple geographic scales.
+A comprehensive analysis of **Population Dynamics Foundation Model (PDFM)** embeddings for geospatial demographic prediction, demonstrating superresolution and imputation techniques across multiple geographic scales.
 
 ## 🎯 Project Overview
 
